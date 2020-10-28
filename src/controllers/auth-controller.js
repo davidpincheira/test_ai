@@ -4,34 +4,36 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/User')
 const verifyToken = require('../controllers/auth.index')
 
-app.post('/api/users', verifyToken, (req, res) => { //signup
+app.post('/api/users', (req, res) => { //signup
+        
+            try {
+                const user = new User({
+                    email: req.body.email,
+                    password: req.body.password
+                });  
+                user.save()
+
+                res.json({
+                    mensaje: "User Created",
+                    user
+                })
+            } catch (error) {
+                res.status(404)
+		        res.send({ error: "User duplicated!" })
+            }
+})
+
+app.get("/api/users", verifyToken, (req, res) => {
+
+
     jwt.verify(req.token, 'secretKey', (error, data) => {
         if(error){
             res.sendStatus(403)
         } else {
-            const user = new User({
-                email: req.body.email,
-                password: req.body.password
-            });  
-
-            user.save()
-
-            res.json({
-                mensaje: "User Created",
-                data
-            })
+            const users = User.find()
+            res.send(200, data)
         }
     })
-})
-
-app.get("/api/users", async(req, res) => {
-    try {
-        const users = await User.find()
-        res.send(users)
-    } catch (error) {
-        res.status(404)
-		res.send({ error: "User doesn't exist!" })
-    }
 })
 
 app.post('/api/login', async(req, res) => {

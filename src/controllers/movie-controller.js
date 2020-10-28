@@ -1,29 +1,32 @@
 const express = require("express")
 const Movie = require("../models/Movie")
 const app = express.Router()
+const verifyToken = require('../controllers/auth.index')
+const jwt = require('jsonwebtoken')
 
 app.get("/api/movies", async (req, res) => {
 	try {
 		const movies = await Movie.find()
-	res.send(movies)
+		res.send(movies)
 	} catch (error){
 		res.status(404)
 		res.send({ error: "Movie doesn't exist!" })
 	}
 })
 
-app.post("/api/movies", async (req, res) => {
-	try {
-		const movie = new Movie({
-			title: req.body.title,
-			gender: req.body.gender
-		})
-		await movie.save()
-		res.send(movie)	
-	} catch (error){
-		res.status(404)
-		res.send({ error: "Movie doesn't exist!" })
-	}
+app.post("/api/movies", verifyToken, (req, res) => {
+	jwt.verify(req.token, 'secretKey', (error, data) => {
+        if(error){
+            res.sendStatus(403)
+        } else {
+			const movie = new Movie({
+				title: req.body.title,
+				gender: req.body.gender
+			})
+			movie.save()
+			res.send(movie)	
+        }
+	})
 })
 
 app.get("/api/movies/:id", async (req, res) => {
